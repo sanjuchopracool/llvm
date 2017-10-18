@@ -315,6 +315,7 @@ set(LLVM_ALL_TARGETS
   Lanai
   Mips
   MSP430
+  STM8
   NVPTX
   PowerPC
   Sparc

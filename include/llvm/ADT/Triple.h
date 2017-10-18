@@ -60,6 +60,7 @@ public:
     mips64,         // MIPS64: mips64
     mips64el,       // MIPS64EL: mips64el
     msp430,         // MSP430: msp430
+    stm8,           // STM8: stm8
     nios2,          // NIOSII: nios2
     ppc,            // PPC: powerpc
     ppc64,          // PPC64: powerpc64, ppu

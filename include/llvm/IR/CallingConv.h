@@ -220,6 +220,16 @@ namespace CallingConv {
     /// shader if tessellation is in use, or otherwise the vertex shader.
     AMDGPU_ES = 96,
 
+    /// Used for STM8 interrupt routines.
+    STM8_INTR = 97,
+
+    /// Calling convention used for STM8 signal routines.
+    STM8_SIGNAL = 98,
+
+    /// Calling convention used for special STM8 rtlib functions
+    /// which have an "optimized" convention to preserve registers.
+    STM8_BUILTIN = 99,
+
     /// The highest possible calling convention ID. Must be some 2^k - 1.
     MaxID = 1023
   };

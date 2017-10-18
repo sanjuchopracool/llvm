@@ -28,6 +28,7 @@ subdirectories =
  Lanai
  Hexagon
  MSP430
+ STM8
  NVPTX
  Mips
  Nios2
