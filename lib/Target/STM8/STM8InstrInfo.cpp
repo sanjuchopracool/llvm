@@ -30,7 +30,7 @@ using namespace llvm;
 // Pin the vtable to this file.
 void STM8InstrInfo::anchor() {}
 
-STM8InstrInfo::STM8InstrInfo(STM8Subtarget &STI)
+STM8InstrInfo::STM8InstrInfo()
   : STM8GenInstrInfo(STM8::ADJCALLSTACKDOWN, STM8::ADJCALLSTACKUP),
     RI() {}
 

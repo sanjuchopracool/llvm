@@ -241,52 +241,7 @@ STM8TargetLowering::STM8TargetLowering(const TargetMachine &TM,
       setCmpLibcallCC(LC.Op, LC.Cond);
   }
 
-  if (STI.hasHWMult16()) {
-    const struct {
-      const RTLIB::Libcall Op;
-      const char * const Name;
-    } LibraryCalls[] = {
-      // Integer Multiply - EABI Table 9
-      { RTLIB::MUL_I16,   "__mspabi_mpyi_hw" },
-      { RTLIB::MUL_I32,   "__mspabi_mpyl_hw" },
-      { RTLIB::MUL_I64,   "__mspabi_mpyll_hw" },
-      // TODO The __mspabi_mpysl*_hw functions ARE implemented in libgcc
-      // TODO The __mspabi_mpyul*_hw functions ARE implemented in libgcc
-    };
-    for (const auto &LC : LibraryCalls) {
-      setLibcallName(LC.Op, LC.Name);
-    }
-  } else if (STI.hasHWMult32()) {
-    const struct {
-      const RTLIB::Libcall Op;
-      const char * const Name;
-    } LibraryCalls[] = {
-      // Integer Multiply - EABI Table 9
-      { RTLIB::MUL_I16,   "__mspabi_mpyi_hw" },
-      { RTLIB::MUL_I32,   "__mspabi_mpyl_hw32" },
-      { RTLIB::MUL_I64,   "__mspabi_mpyll_hw32" },
-      // TODO The __mspabi_mpysl*_hw32 functions ARE implemented in libgcc
-      // TODO The __mspabi_mpyul*_hw32 functions ARE implemented in libgcc
-    };
-    for (const auto &LC : LibraryCalls) {
-      setLibcallName(LC.Op, LC.Name);
-    }
-  } else if (STI.hasHWMultF5()) {
-    const struct {
-      const RTLIB::Libcall Op;
-      const char * const Name;
-    } LibraryCalls[] = {
-      // Integer Multiply - EABI Table 9
-      { RTLIB::MUL_I16,   "__mspabi_mpyi_f5hw" },
-      { RTLIB::MUL_I32,   "__mspabi_mpyl_f5hw" },
-      { RTLIB::MUL_I64,   "__mspabi_mpyll_f5hw" },
-      // TODO The __mspabi_mpysl*_f5hw functions ARE implemented in libgcc
-      // TODO The __mspabi_mpyul*_f5hw functions ARE implemented in libgcc
-    };
-    for (const auto &LC : LibraryCalls) {
-      setLibcallName(LC.Op, LC.Name);
-    }
-  } else { // NoHWMult
+    { // NoHWMult
     const struct {
       const RTLIB::Libcall Op;
       const char * const Name;

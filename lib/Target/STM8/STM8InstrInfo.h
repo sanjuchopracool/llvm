@@ -44,7 +44,7 @@ class STM8InstrInfo : public STM8GenInstrInfo {
   const STM8RegisterInfo RI;
   virtual void anchor();
 public:
-  explicit STM8InstrInfo(STM8Subtarget &STI);
+  explicit STM8InstrInfo();
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
