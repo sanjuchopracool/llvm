@@ -1,3 +1,7 @@
+How to generate target assembly
+
+~/Desktop/llvm-bin/bin/clang++ -cc1 -triple stm8-unknown-unknown -S -o ex1.s  main.cpp
+
 Low Level Virtual Machine (LLVM)
 ================================
 
