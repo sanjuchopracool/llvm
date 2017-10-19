@@ -1491,7 +1491,6 @@ bool Triple::isLittleEndian() const {
   case Triple::mips64el:
   case Triple::mipsel:
   case Triple::msp430:
-  case Triple::stm8:
   case Triple::nios2:
   case Triple::nvptx64:
   case Triple::nvptx:
@@ -1513,6 +1512,8 @@ bool Triple::isLittleEndian() const {
   case Triple::renderscript32:
   case Triple::renderscript64:
     return true;
+
+  case Triple::stm8:
   default:
     return false;
   }

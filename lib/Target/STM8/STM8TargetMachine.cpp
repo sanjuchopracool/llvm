@@ -40,7 +40,7 @@ static CodeModel::Model getEffectiveCodeModel(Optional<CodeModel::Model> CM) {
 
 static std::string computeDataLayout(const Triple &TT, StringRef CPU,
                                      const TargetOptions &Options) {
-  return "e-m:e-p:16:16-i32:16-i64:16-f32:16-f64:16-a:8-n8:16-S16";
+  return "E-p:16:8-i8:8-i16:8-i32:8-i64:8-f32:8-f64:8-n8-a:8";
 }
 
 STM8TargetMachine::STM8TargetMachine(const Target &T, const Triple &TT,
