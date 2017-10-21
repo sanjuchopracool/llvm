@@ -26,8 +26,6 @@
 
 *.user.*
 *.user
-*.files
-*.includes
 
 #==============================================================================#
 # Explicit files to ignore (only matches one).
