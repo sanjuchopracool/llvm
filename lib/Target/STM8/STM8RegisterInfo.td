@@ -64,5 +64,5 @@ def Y : STM8RegWithSubRegs<"Y", [YH, YL]>;
 def SP : STM8Reg<"SP">;
 def PC : STM8Reg<"PC">;
 
-def GR8  : STM8Reg8Class<(add A, XL, YL, XH, YH)>;
-def GR16 : STM8Reg16Class<(add X, Y)>;
+def GR8  : STM8Reg8Class<(add A, XL, YL, XH, YH, PCL, PCH, PCE, CC)>;
+def GR16 : STM8Reg16Class<(add X, Y, SP, PC)>;
