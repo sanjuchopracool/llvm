@@ -37,59 +37,23 @@ STM8RegisterInfo::STM8RegisterInfo()
 
 const MCPhysReg*
 STM8RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  const STM8FrameLowering *TFI = getFrameLowering(*MF);
-  const Function* F = MF->getFunction();
-  static const MCPhysReg CalleeSavedRegs[] = {
-    STM8::FP, STM8::R5, STM8::R6, STM8::R7,
-    STM8::R8, STM8::R9, STM8::R10,
-    0
-  };
-  static const MCPhysReg CalleeSavedRegsFP[] = {
-    STM8::R5, STM8::R6, STM8::R7,
-    STM8::R8, STM8::R9, STM8::R10,
-    0
-  };
-  static const MCPhysReg CalleeSavedRegsIntr[] = {
-    STM8::FP,  STM8::R5,  STM8::R6,  STM8::R7,
-    STM8::R8,  STM8::R9,  STM8::R10, STM8::R11,
-    STM8::R12, STM8::R13, STM8::R14, STM8::R15,
-    0
-  };
-  static const MCPhysReg CalleeSavedRegsIntrFP[] = {
-    STM8::R5,  STM8::R6,  STM8::R7,
-    STM8::R8,  STM8::R9,  STM8::R10, STM8::R11,
-    STM8::R12, STM8::R13, STM8::R14, STM8::R15,
-    0
-  };
 
-  if (TFI->hasFP(*MF))
-    return (F->getCallingConv() == CallingConv::STM8_INTR ?
-            CalleeSavedRegsIntrFP : CalleeSavedRegsFP);
-  else
-    return (F->getCallingConv() == CallingConv::STM8_INTR ?
-            CalleeSavedRegsIntr : CalleeSavedRegs);
+  static const MCPhysReg CalleeSavedRegs[] = {
+    0
+  };
+    return CalleeSavedRegs;
 
 }
 
 BitVector STM8RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
-  const STM8FrameLowering *TFI = getFrameLowering(MF);
 
-  // Mark 4 special registers with subregisters as reserved.
-  Reserved.set(STM8::PCB);
-  Reserved.set(STM8::SPB);
-  Reserved.set(STM8::SRB);
-  Reserved.set(STM8::CGB);
+  Reserved.set(STM8::PCL);
+  Reserved.set(STM8::PCH);
+  Reserved.set(STM8::PCE);
   Reserved.set(STM8::PC);
   Reserved.set(STM8::SP);
-  Reserved.set(STM8::SR);
-  Reserved.set(STM8::CG);
-
-  // Mark frame pointer as reserved if needed.
-  if (TFI->hasFP(MF)) {
-    Reserved.set(STM8::FPB);
-    Reserved.set(STM8::FP);
-  }
+  Reserved.set(STM8::CC);
 
   return Reserved;
 }
@@ -104,58 +68,8 @@ void
 STM8RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                         int SPAdj, unsigned FIOperandNum,
                                         RegScavenger *RS) const {
-  assert(SPAdj == 0 && "Unexpected");
-
-  MachineInstr &MI = *II;
-  MachineBasicBlock &MBB = *MI.getParent();
-  MachineFunction &MF = *MBB.getParent();
-  const STM8FrameLowering *TFI = getFrameLowering(MF);
-  DebugLoc dl = MI.getDebugLoc();
-  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
-
-  unsigned BasePtr = (TFI->hasFP(MF) ? STM8::FP : STM8::SP);
-  int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
-
-  // Skip the saved PC
-  Offset += 2;
-
-  if (!TFI->hasFP(MF))
-    Offset += MF.getFrameInfo().getStackSize();
-  else
-    Offset += 2; // Skip the saved FP
-
-  // Fold imm into offset
-  Offset += MI.getOperand(FIOperandNum + 1).getImm();
-
-  if (MI.getOpcode() == STM8::ADDframe) {
-    // This is actually "load effective address" of the stack slot
-    // instruction. We have only two-address instructions, thus we need to
-    // expand it into mov + add
-    const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
-
-    MI.setDesc(TII.get(STM8::MOV16rr));
-    MI.getOperand(FIOperandNum).ChangeToRegister(BasePtr, false);
-
-    if (Offset == 0)
-      return;
-
-    // We need to materialize the offset via add instruction.
-    unsigned DstReg = MI.getOperand(0).getReg();
-    if (Offset < 0)
-      BuildMI(MBB, std::next(II), dl, TII.get(STM8::SUB16ri), DstReg)
-        .addReg(DstReg).addImm(-Offset);
-    else
-      BuildMI(MBB, std::next(II), dl, TII.get(STM8::ADD16ri), DstReg)
-        .addReg(DstReg).addImm(Offset);
-
-    return;
-  }
-
-  MI.getOperand(FIOperandNum).ChangeToRegister(BasePtr, false);
-  MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
 }
 
 unsigned STM8RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  const STM8FrameLowering *TFI = getFrameLowering(MF);
-  return TFI->hasFP(MF) ? STM8::FP : STM8::SP;
+  return STM8::SP;
 }
