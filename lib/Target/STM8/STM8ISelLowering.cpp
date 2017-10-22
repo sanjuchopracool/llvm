@@ -60,6 +60,8 @@ STM8TargetLowering::STM8TargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
 }
 
+#include "STM8GenCallingConv.inc"
+
 SDValue STM8TargetLowering::LowerFormalArguments(
     SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &dl,
@@ -73,7 +75,40 @@ STM8TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                                   const SmallVectorImpl<SDValue> &OutVals,
                                   const SDLoc &dl, SelectionDAG &DAG) const {
-      return DAG.getNode(STM8ISD::RET_FLAG, dl, MVT::Other, Chain);
+    // CCValAssign - represent the assignment of
+    // the return value to a location
+    SmallVector<CCValAssign, 16> RVLocs;
+
+    // CCState - Info about the registers and stack slot.
+    CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+      RVLocs, *DAG.getContext());
+
+    // Analyze return values.
+    CCInfo.AnalyzeReturn(Outs, RetCC_STM8);
+
+    SDValue Flag;
+    SmallVector<SDValue, 4> RetOps(1, Chain);
+
+    // Copy the result value into the output registers.
+    for (unsigned i = 0; i != RVLocs.size(); i++)
+    {
+      CCValAssign &VA = RVLocs[i];
+      assert(VA.isRegLoc() && "Can only return in registers!");
+
+      Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), OutVals[i], Flag);
+
+      // Guarantee the all emitted copies are stuck together,
+      // avoiding something bad
+      Flag = Chain.getValue(1);
+      RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
+    }
+
+    RetOps[0] = Chain;  // Update chain.
+
+    if (Flag.getNode())
+      RetOps.push_back(Flag);
+
+  return DAG.getNode(STM8ISD::RET_FLAG, dl, MVT::Other, RetOps);
 }
 
 const char *STM8TargetLowering::getTargetNodeName(unsigned Opcode) const {
