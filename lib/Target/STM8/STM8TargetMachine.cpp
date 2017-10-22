@@ -87,5 +87,5 @@ bool STM8PassConfig::addInstSelector() {
 
 void STM8PassConfig::addPreEmitPass() {
   // Must run branch selection immediately preceding the asm printer.
-  addPass(createSTM8BranchSelectionPass(), false);
+//  addPass(createSTM8BranchSelectionPass(), false);
 }

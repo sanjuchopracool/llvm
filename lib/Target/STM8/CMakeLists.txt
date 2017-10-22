@@ -9,7 +9,7 @@ tablegen(LLVM STM8GenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(STM8CommonTableGen)
 
 add_llvm_target(STM8CodeGen
-  STM8BranchSelector.cpp
+#  STM8BranchSelector.cpp
   STM8ISelDAGToDAG.cpp
   STM8ISelLowering.cpp
   STM8InstrInfo.cpp

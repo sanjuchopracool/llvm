@@ -24,22 +24,6 @@ namespace llvm {
 
 class STM8Subtarget;
 
-/// STM8II - This namespace holds all of the target specific flags that
-/// instruction info tracks.
-///
-namespace STM8II {
-  enum {
-    SizeShift   = 2,
-    SizeMask    = 7 << SizeShift,
-
-    SizeUnknown = 0 << SizeShift,
-    SizeSpecial = 1 << SizeShift,
-    Size2Bytes  = 2 << SizeShift,
-    Size4Bytes  = 3 << SizeShift,
-    Size6Bytes  = 4 << SizeShift
-  };
-}
-
 class STM8InstrInfo : public STM8GenInstrInfo {
   const STM8RegisterInfo RI;
   virtual void anchor();
@@ -51,46 +35,6 @@ public:
   /// always be able to get register info as well (through this method).
   ///
   const TargetRegisterInfo &getRegisterInfo() const { return RI; }
-
-  void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                   const DebugLoc &DL, unsigned DestReg, unsigned SrcReg,
-                   bool KillSrc) const override;
-
-  void storeRegToStackSlot(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator MI,
-                           unsigned SrcReg, bool isKill,
-                           int FrameIndex,
-                           const TargetRegisterClass *RC,
-                           const TargetRegisterInfo *TRI) const override;
-  void loadRegFromStackSlot(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MI,
-                            unsigned DestReg, int FrameIdx,
-                            const TargetRegisterClass *RC,
-                            const TargetRegisterInfo *TRI) const override;
-
-  unsigned getInstSizeInBytes(const MachineInstr &MI) const override;
-
-  // Branch folding goodness
-  bool
-  reverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
-  bool isUnpredicatedTerminator(const MachineInstr &MI) const override;
-  bool analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
-                     MachineBasicBlock *&FBB,
-                     SmallVectorImpl<MachineOperand> &Cond,
-                     bool AllowModify) const override;
-
-  unsigned removeBranch(MachineBasicBlock &MBB,
-                        int *BytesRemoved = nullptr) const override;
-  unsigned insertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                        MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
-                        const DebugLoc &DL,
-                        int *BytesAdded = nullptr) const override;
-
-  int64_t getFramePoppedByCallee(const MachineInstr &I) const {
-    assert(isFrameInstr(I) && "Not a frame instruction");
-    assert(I.getOperand(1).getImm() >= 0 && "Size must not be negative");
-    return I.getOperand(1).getImm();
-  }
 };
 
 }
