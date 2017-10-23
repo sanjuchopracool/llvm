@@ -1,4 +1,4 @@
-//===- STM8InstrInfo.td - STM8 Instruction defs ---------------*- tblgen-*-===//
+//===-- STM8InstrInfo.td - STM8 Instruction defs -------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+include "STM8InstrFormats.td"
+
 class STM8Inst<dag outs, dag ins, string asmstr, list<dag> pattern> : Instruction {
   let Namespace = "STM8";
 
@@ -21,67 +23,33 @@ class STM8Inst<dag outs, dag ins, string asmstr, list<dag> pattern> : Instructio
   let Pattern = pattern;
 }
 
+
 //===----------------------------------------------------------------------===//
 // STM8 Specific Node Definitions.
 //===----------------------------------------------------------------------===//
-
-def STM8retflag : SDNode<"STM8ISD::RET_FLAG", SDTNone,
-                         [SDNPHasChain, SDNPOptInGlue]>;
+def STM8retflag  : SDNode<"STM8ISD::RET_FLAG", SDTNone,
+                       [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 //===----------------------------------------------------------------------===//
-// STM8 Operand Definitions.
-//===----------------------------------------------------------------------===//
 
-def shortmem : Operand<i8> {
-  let PrintMethod = "printSrcMemOperand";
-  let MIOperandInfo = (ops GR8, i8imm);
+
+//===----------------------------------------------------------------------===//
+//  Control Flow Instructions...
+//
+
+// FIXME: Provide proper encoding!
+let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
+  def RET  : STM8Inst<
+                     (outs), (ins), "ret",  [(STM8retflag)]>;
 }
 
-def longmem : Operand<i16> {
-  let PrintMethod = "printSrcMemOperand";
-  let MIOperandInfo = (ops GR16, i16imm);
-}
-
 //===----------------------------------------------------------------------===//
-// STM8 Complex Pattern Definitions.
-//===----------------------------------------------------------------------===//
+// Move Instructions
 
-def addr : ComplexPattern<iPTR, 2, "SelectAddr", [], []>;
-
-//===----------------------------------------------------------------------===//
-// STM8 Instructions.
-//===----------------------------------------------------------------------===//
-
-let Constraints = "$srcA = $dst", Uses = [CC] in {
-def ADCai : STM8Inst<(outs GR8:$dst), (ins GR8:$srcA, i8imm:$src),
-                   "adc\t$srcA, #$src",
-                   [(set GR8:$dst, (adde GR8:$srcA, (i8 imm:$src))),
-                    (implicit CC)]>;
-def ADCar : STM8Inst<(outs GR8:$dst), (ins GR8:$srcA, GR8:$src),
-                   "adc\t$srcA, ($src)",
-                   [(set GR8:$dst, (adde GR8:$srcA, GR8:$src)),
-                    (implicit CC)]>;
-}
-
+// FIXME: Provide proper encoding!
 let isAsCheapAsAMove = 1 in {
-def LDWri : STM8Inst<(outs GR16:$dst), (ins i16imm:$src),
-                     "ldw\t$dst, #$src",
-                     [(set GR16:$dst, imm:$src)]>;
-def LDWmr : STM8Inst<(outs), (ins longmem:$dst, GR16:$src),
-                     "ldw\t$dst, $src",
-                     [(store GR16:$src, addr:$dst)]>;
+def LDWri : STM8Inst<
+                    (outs GR16:$dst), (ins i16imm:$src),
+                    "ldw\t$dst, $src",
+                    [(set GR16:$dst, imm:$src)]>;
 }
-
-let hasSideEffects = 0 in
-def NOP : STM8Inst<(outs), (ins),
-                   "nop", []>;
-
-let isReturn = 1 in {
-def RET : STM8Inst<(outs), (ins),
-                   "ret", [(STM8retflag)]>;
-}
-
-let Constraints = "$src = $dst" in
-def SWAPW : STM8Inst<(outs GR16:$dst), (ins GR16:$src),
-                     "swapw\t$src",
-                     [(set GR16:$dst, (bswap GR16:$src))]>;
