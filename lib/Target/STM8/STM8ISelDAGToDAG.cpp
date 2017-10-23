@@ -47,29 +47,12 @@ namespace {
   #include "STM8GenDAGISel.inc"
 
 private:
-    void Select(SDNode *N);
-    bool SelectAddr(SDValue Addr, SDValue &Base, SDValue &Disp);
+    void Select(SDNode *N) override;
   };
 }
 
 void STM8DAGToDAGISel::Select(SDNode *N) {
-  if (N->isMachineOpcode())
-    return;
   SelectCode(N);
-}
-
-
-/// SelectAddr - returns true if it is able pattern match an addressing mode.
-/// It returns the operands which make up the maximal addressing mode it can
-/// match by reference.
-bool STM8DAGToDAGISel::SelectAddr(SDValue N,
-                                  SDValue &Base, SDValue &Disp) {
-  if (N.getOpcode() != ISD::FrameIndex)
-    return false;
-  int FI = cast<FrameIndexSDNode>(N)->getIndex();
-//  Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
-  Disp = CurDAG->getTargetConstant(0, SDLoc(N), MVT::i16);
-  return true;
 }
 
 /// createSTM8ISelDag - This pass converts a legalized DAG into a

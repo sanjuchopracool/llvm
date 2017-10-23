@@ -14,7 +14,6 @@ add_llvm_target(STM8CodeGen
   STM8ISelLowering.cpp
   STM8InstrInfo.cpp
   STM8FrameLowering.cpp
-  STM8MachineFunctionInfo.cpp
   STM8RegisterInfo.cpp
   STM8Subtarget.cpp
   STM8TargetMachine.cpp

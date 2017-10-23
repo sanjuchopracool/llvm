@@ -13,7 +13,6 @@
 
 #include "STM8RegisterInfo.h"
 #include "STM8.h"
-#include "STM8MachineFunctionInfo.h"
 #include "STM8TargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"

@@ -13,7 +13,6 @@
 
 #include "STM8ISelLowering.h"
 #include "STM8.h"
-#include "STM8MachineFunctionInfo.h"
 #include "STM8Subtarget.h"
 #include "STM8TargetMachine.h"
 #include "llvm/CodeGen/CallingConvLower.h"

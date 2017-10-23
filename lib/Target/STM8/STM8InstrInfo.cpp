@@ -13,7 +13,6 @@
 
 #include "STM8InstrInfo.h"
 #include "STM8.h"
-#include "STM8MachineFunctionInfo.h"
 #include "STM8TargetMachine.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
