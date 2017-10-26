@@ -83,12 +83,6 @@ const unsigned MaxDepth = 6;
 static cl::opt<unsigned> DomConditionsMaxUses("dom-conditions-max-uses",
                                               cl::Hidden, cl::init(20));
 
-// This optimization is known to cause performance regressions is some cases,
-// keep it under a temporary flag for now.
-static cl::opt<bool>
-DontImproveNonNegativePhiBits("dont-improve-non-negative-phi-bits",
-                              cl::Hidden, cl::init(true));
-
 /// Returns the bitwidth of the given scalar or pointer type. For vector types,
 /// returns the element type's bitwidth.
 static unsigned getBitWidth(Type *Ty, const DataLayout &DL) {
@@ -1289,9 +1283,6 @@ static void computeKnownBitsFromOperator(const Operator *I, KnownBits &Known,
           Known.Zero.setLowBits(std::min(Known2.countMinTrailingZeros(),
                                          Known3.countMinTrailingZeros()));
 
-          if (DontImproveNonNegativePhiBits)
-            break;
-
           auto *OverflowOp = dyn_cast<OverflowingBinaryOperator>(LU);
           if (OverflowOp && OverflowOp->hasNoSignedWrap()) {
             // If initial value of recurrence is nonnegative, and we are adding
@@ -1516,9 +1507,8 @@ void computeKnownBits(const Value *V, KnownBits &Known, unsigned Depth,
     // We know that CDS must be a vector of integers. Take the intersection of
     // each element.
     Known.Zero.setAllBits(); Known.One.setAllBits();
-    APInt Elt(BitWidth, 0);
     for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
-      Elt = CDS->getElementAsInteger(i);
+      APInt Elt = CDS->getElementAsAPInt(i);
       Known.Zero &= ~Elt;
       Known.One &= Elt;
     }
@@ -1529,7 +1519,6 @@ void computeKnownBits(const Value *V, KnownBits &Known, unsigned Depth,
     // We know that CV must be a vector of integers. Take the intersection of
     // each element.
     Known.Zero.setAllBits(); Known.One.setAllBits();
-    APInt Elt(BitWidth, 0);
     for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i) {
       Constant *Element = CV->getAggregateElement(i);
       auto *ElementCI = dyn_cast_or_null<ConstantInt>(Element);
@@ -1537,7 +1526,7 @@ void computeKnownBits(const Value *V, KnownBits &Known, unsigned Depth,
         Known.resetAll();
         return;
       }
-      Elt = ElementCI->getValue();
+      const APInt &Elt = ElementCI->getValue();
       Known.Zero &= ~Elt;
       Known.One &= Elt;
     }
@@ -2108,11 +2097,7 @@ static unsigned computeNumSignBitsVectorConstant(const Value *V,
     if (!Elt)
       return 0;
 
-    // If the sign bit is 1, flip the bits, so we always count leading zeros.
-    APInt EltVal = Elt->getValue();
-    if (EltVal.isNegative())
-      EltVal = ~EltVal;
-    MinSignBits = std::min(MinSignBits, EltVal.countLeadingZeros());
+    MinSignBits = std::min(MinSignBits, Elt->getValue().getNumSignBits());
   }
 
   return MinSignBits;
@@ -4299,6 +4284,20 @@ static SelectPatternResult matchSelectPattern(CmpInst::Predicate Pred,
   return matchFastFloatClamp(Pred, CmpLHS, CmpRHS, TrueVal, FalseVal, LHS, RHS);
 }
 
+/// Helps to match a select pattern in case of a type mismatch.
+///
+/// The function processes the case when type of true and false values of a
+/// select instruction differs from type of the cmp instruction operands because
+/// of a cast instructon. The function checks if it is legal to move the cast
+/// operation after "select". If yes, it returns the new second value of
+/// "select" (with the assumption that cast is moved):
+/// 1. As operand of cast instruction when both values of "select" are same cast
+/// instructions.
+/// 2. As restored constant (by applying reverse cast operation) when the first
+/// value of the "select" is a cast operation and the second value is a
+/// constant.
+/// NOTE: We return only the new second value because the first value could be
+/// accessed as operand of cast instruction.
 static Value *lookThroughCast(CmpInst *CmpI, Value *V1, Value *V2,
                               Instruction::CastOps *CastOp) {
   auto *Cast1 = dyn_cast<CastInst>(V1);
@@ -4329,7 +4328,34 @@ static Value *lookThroughCast(CmpInst *CmpI, Value *V1, Value *V2,
       CastedTo = ConstantExpr::getTrunc(C, SrcTy, true);
     break;
   case Instruction::Trunc:
-    CastedTo = ConstantExpr::getIntegerCast(C, SrcTy, CmpI->isSigned());
+    Constant *CmpConst;
+    if (match(CmpI->getOperand(1), m_Constant(CmpConst)) &&
+        CmpConst->getType() == SrcTy) {
+      // Here we have the following case:
+      //
+      //   %cond = cmp iN %x, CmpConst
+      //   %tr = trunc iN %x to iK
+      //   %narrowsel = select i1 %cond, iK %t, iK C
+      //
+      // We can always move trunc after select operation:
+      //
+      //   %cond = cmp iN %x, CmpConst
+      //   %widesel = select i1 %cond, iN %x, iN CmpConst
+      //   %tr = trunc iN %widesel to iK
+      //
+      // Note that C could be extended in any way because we don't care about
+      // upper bits after truncation. It can't be abs pattern, because it would
+      // look like:
+      //
+      //   select i1 %cond, x, -x.
+      //
+      // So only min/max pattern could be matched. Such match requires widened C
+      // == CmpConst. That is why set widened C = CmpConst, condition trunc
+      // CmpConst == C is checked below.
+      CastedTo = CmpConst;
+    } else {
+      CastedTo = ConstantExpr::getIntegerCast(C, SrcTy, CmpI->isSigned());
+    }
     break;
   case Instruction::FPTrunc:
     CastedTo = ConstantExpr::getFPExtend(C, SrcTy, true);
